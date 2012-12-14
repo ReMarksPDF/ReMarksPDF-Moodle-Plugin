@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/remarks/db" VERSION="20111002" COMMENT="XMLDB file for Moodle mod/remarks"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="remarks" COMMENT="Main table for the remarks module type." NEXT="remarks_markermap">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="course"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="Course remarks activity belongs to" PREVIOUS="id" NEXT="name"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="name field for moodle instances" PREVIOUS="course" NEXT="intro"/>
+        <FIELD NAME="intro" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false" COMMENT="General introduction of the remarks activity" PREVIOUS="name" NEXT="introformat"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Format of the intro field (MOODLE, HTML, MARKDOWN...)" PREVIOUS="intro" NEXT="timecreated"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="introformat" NEXT="timemodified"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="timecreated" NEXT="timedue"/>
+        <FIELD NAME="timedue" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="The time when submissions are due by - unix timestamp" PREVIOUS="timemodified" NEXT="timeopen"/>
+        <FIELD NAME="timeopen" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time when student submissions are first permitted. (unix timestamp)" PREVIOUS="timedue" NEXT="timeclose"/>
+        <FIELD NAME="timeclose" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time after which students are prevented from submitting (unix timestamp)" PREVIOUS="timeopen" NEXT="remarkstype"/>
+        <FIELD NAME="remarkstype" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Is this instance a group activity" PREVIOUS="timeclose" NEXT="groupingid"/>
+        <FIELD NAME="groupingid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Limit to groups in this grouping if groupmode is set" PREVIOUS="remarkstype" NEXT="grade"/>
+        <FIELD NAME="grade" TYPE="number" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" DECIMALS="5" COMMENT="how much this activity is worth in the course" PREVIOUS="groupingid"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="course" UNIQUE="false" FIELDS="course"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="remarks_markermap" COMMENT="Mapping of marker users to (potential) submitters." PREVIOUS="remarks" NEXT="remarks_upload">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="remarksid"/>
+        <FIELD NAME="remarksid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The remarks cm this mapping relates to" PREVIOUS="id" NEXT="markerid"/>
+        <FIELD NAME="markerid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The user id of the person to mark submission" PREVIOUS="remarksid" NEXT="markeeid"/>
+        <FIELD NAME="markeeid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The id of the (potential) submitting entity - user or group id" PREVIOUS="markerid"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="remarks_markermap_rid_ix" UNIQUE="false" FIELDS="remarksid" NEXT="rema_map_ix"/>
+        <INDEX NAME="rema_map_ix" UNIQUE="true" FIELDS="remarksid, markerid, markeeid" PREVIOUS="remarks_markermap_rid_ix"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="remarks_upload" COMMENT="Items uploaded by potential submitters." PREVIOUS="remarks_markermap" NEXT="remarks_submission">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="remarksid"/>
+        <FIELD NAME="remarksid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The remarks assignment that this upload relates to" PREVIOUS="id" NEXT="fileid"/>
+        <FIELD NAME="fileid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The file that has been uploaded" PREVIOUS="remarksid" NEXT="timeupload"/>
+        <FIELD NAME="timeupload" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="When the file was uploaded" PREVIOUS="fileid" NEXT="uploaduserid"/>
+        <FIELD NAME="uploaduserid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The user that uploaded the file" PREVIOUS="timeupload" NEXT="uploadedfor"/>
+        <FIELD NAME="uploadedfor" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The identifier of the group or user owning this upload" PREVIOUS="uploaduserid"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="remarks_submission" COMMENT="Details about when an uploaded file is submitted." PREVIOUS="remarks_upload">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="uploadid"/>
+        <FIELD NAME="uploadid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The upload this submission is generated from." PREVIOUS="id" NEXT="timesubmission"/>
+        <FIELD NAME="timesubmission" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="When the submission is made" PREVIOUS="uploadid" NEXT="submittedbyuserid"/>
+        <FIELD NAME="submittedbyuserid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="Who submitted the file" PREVIOUS="timesubmission" NEXT="submittedforid"/>
+        <FIELD NAME="submittedforid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="The id of the entity this submission is on the behalf of." PREVIOUS="submittedbyuserid" NEXT="draftrfc"/>
+        <FIELD NAME="draftrfc" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="is this submission just a draft-request-for-comment submission" PREVIOUS="submittedforid" NEXT="resubmit"/>
+        <FIELD NAME="resubmit" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Set by marker to indicate that the student may resubmit" PREVIOUS="draftrfc" NEXT="mark"/>
+        <FIELD NAME="mark" TYPE="number" LENGTH="6" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" DECIMALS="3" PREVIOUS="resubmit" NEXT="version"/>
+        <FIELD NAME="version" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="mark" NEXT="fileid"/>
+        <FIELD NAME="fileid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Id of the most recent version of the submission" PREVIOUS="version" NEXT="released"/>
+        <FIELD NAME="released" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="fileid" NEXT="timereleased"/>
+        <FIELD NAME="timereleased" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" COMMENT="Time that a submission was released" PREVIOUS="released" NEXT="originalityscore"/>
+        <FIELD NAME="originalityscore" TYPE="number" LENGTH="6" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" DECIMALS="3" PREVIOUS="timereleased" NEXT="originalityknown"/>
+        <FIELD NAME="originalityknown" TYPE="int" LENGTH="4" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="originalityscore"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>
